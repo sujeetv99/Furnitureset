@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WoodCraft Furniture | Premium Furniture</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f6f1ea;color:#2b211a}
+header{background:linear-gradient(135deg,#3b2417,#70452b);color:white;padding:22px 6%;display:flex;justify-content:space-between;align-items:center;gap:20px;position:sticky;top:0;z-index:5}
+.logo{font-size:27px;font-weight:800}.logo span{color:#e8bd7b}
+header button,.btn{border:0;border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:700}
+.admin{background:#e8bd7b;color:#352015}
+.hero{padding:65px 6%;background:linear-gradient(120deg,#ead7c2,#fffaf4);text-align:center}
+.hero h1{font-size:clamp(38px,6vw,65px);margin:0 0 12px}.hero p{font-size:18px;color:#6d5848}
+.container{max-width:1200px;margin:auto;padding:35px 6%}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:25px}
+.search{padding:13px 16px;border:1px solid #d7c7b8;border-radius:10px;width:min(100%,350px);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:22px}
+.card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 25px #5b3c2418;border:1px solid #eadfd4;transition:.2s}
+.card:hover{transform:translateY(-5px)}.pic{height:230px;background:#eee;position:relative}
+.pic img{width:100%;height:100%;object-fit:cover}.tag{position:absolute;top:12px;left:12px;background:#fff;padding:6px 10px;border-radius:20px;font-size:12px}
+.info{padding:18px}.info h3{margin:0 0 7px;font-size:20px}.desc{color:#75685e;font-size:14px;min-height:38px}.price{font-size:22px;font-weight:800;color:#7a4526;margin:14px 0}
+.wa{display:block;text-align:center;background:#315c39;color:white;text-decoration:none;padding:11px;border-radius:9px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;width:min(600px,100%);max-height:90vh;overflow:auto;border-radius:18px;padding:25px}
+.box h2{margin-top:0}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,textarea{width:100%;padding:12px;border:1px solid #d8ccc1;border-radius:9px;margin:6px 0 14px;font:inherit}
+textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}
+.preview{width:100%;height:180px;object-fit:cover;border-radius:10px;background:#eee;margin-bottom:12px}
+.actions{display:flex;gap:10px;justify-content:flex-end}.save{background:#70452b;color:#fff}.cancel{background:#eee}
+.edit,.delete{margin-top:10px;width:48%;padding:9px;border-radius:8px;border:0;cursor:pointer}.edit{background:#ead7c2}.delete{background:#f2dddd}
+.empty{text-align:center;padding:50px;color:#806f61}
+footer{text-align:center;padding:35px;background:#2d2119;color:#ddd;margin-top:30px}
+@media(max-width:600px){.row{grid-template-columns:1fr}.full{grid-column:auto}header{padding:17px 4%}.container{padding:25px 4%}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">Wood<span>Craft</span> Furniture</div>
+ <button class="admin" onclick="openModal()">＋ Add Furniture</button>
+</header>
+
+<section class="hero">
+ <h1>Furniture That Feels Like Home.</h1>
+ <p>New designs • Premium finish • Custom furniture</p>
+</section>
+
+<div class="container">
+ <div class="toolbar">
+  <h2>Our Furniture Collection</h2>
+  <input class="search" id="search" placeholder="🔍 Search furniture..." oninput="render()">
+ </div>
+ <div class="grid" id="grid"></div>
+</div>
+
+<footer>© 2026 WoodCraft Furniture • Quality • Style • Comfort</footer>
+
+<div class="modal" id="modal">
+ <div class="box">
+  <h2 id="modalTitle">Add New Furniture</h2>
+  <form id="form">
+   <input type="hidden" id="editId">
+   <div class="row">
+    <div><label>Furniture Name *</label><input id="name" required placeholder="e.g. Royal Sofa"></div>
+    <div><label>Price (₹) *</label><input id="price" type="number" required placeholder="25000"></div>
+    <div class="full"><label>Description</label><textarea id="desc" placeholder="Material, size, colour, features..."></textarea></div>
+    <div class="full"><label>Furniture Image *</label><input id="image" type="file" accept="image/*"></div>
+    <div class="full"><img id="preview" class="preview" alt="Preview"></div>
+   </div>
+   <div class="actions">
+    <button type="button" class="btn cancel" onclick="closeModal()">Cancel</button>
+    <button class="btn save">Save Furniture</button>
+   </div>
+  </form>
+ </div>
+</div>
+
+<script>
+const KEY='woodcraft_products_v1';
+let products=JSON.parse(localStorage.getItem(KEY)||'[]');
+const demo=[
+{name:'Luxury 3-Seater Sofa',price:28999,desc:'Premium fabric sofa with comfortable cushioning.',image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80'},
+{name:'Modern Wooden Dining Table',price:19999,desc:'Solid-look dining table for modern homes.',image:'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=900&q=80'},
+{name:'Elegant King Bed',price:34999,desc:'Stylish king-size bed with premium wooden finish.',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'}
+];
+if(!products.length){products=demo;save();}
+
+function save(){localStorage.setItem(KEY,JSON.stringify(products))}
+function money(n){return '₹'+Number(n).toLocaleString('en-IN')}
+function render(){
+ const q=document.getElementById('search').value.toLowerCase();
+ const list=products.filter(p=>p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q));
+ const grid=document.getElementById('grid');
+ if(!list.length){grid.innerHTML='<div class="empty">No furniture found.</div>';return}
+ grid.innerHTML=list.map(p=>`
+ <div class="card">
+  <div class="pic"><img src="${p.image}" alt="${esc(p.name)}"><span class="tag">NEW</span></div>
+  <div class="info"><h3>${esc(p.name)}</h3><div class="desc">${esc(p.desc)}</div>
+  <div class="price">${money(p.price)}</div>
+  <a class="wa" href="https://wa.me/?text=${encodeURIComponent('Hello, I am interested in '+p.name+' - '+money(p.price))}" target="_blank">💬 Enquire on WhatsApp</a>
+  <button class="edit" onclick="editProduct('${p.id}')">✏️ Edit</button>
+  <button class="delete" onclick="deleteProduct('${p.id}')">🗑️ Delete</button></div>
+ </div>`).join('');
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function openModal(id=null){
+ document.getElementById('modal').style.display='flex';
+ document.getElementById('form').reset();
+ document.getElementById('preview').src='';
+ document.getElementById('editId').value=id||'';
+ document.getElementById('modalTitle').textContent=id?'Edit Furniture':'Add New Furniture';
+ if(id){let p=products.find(x=>x.id===id);document.getElementById('name').value=p.name;document.getElementById('price').value=p.price;document.getElementById('desc').value=p.desc;document.getElementById('preview').src=p.image}
+}
+function closeModal(){document.getElementById('modal').style.display='none'}
+document.getElementById('image').addEventListener('change',e=>{
+ const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>document.getElementById('preview').src=r.result;r.readAsDataURL(f)}
+});
+document.getElementById('form').addEventListener('submit',e=>{
+ e.preventDefault();
+ const id=document.getElementById('editId').value;
+ const old=id?products.find(p=>p.id===id):null;
+ const file=document.getElementById('image').files[0];
+ const finish=(img)=>{
+  const p={id:id||Date.now().toString(),name:document.getElementById('name').value,price:document.getElementById('price').value,desc:document.getElementById('desc').value,image:img};
+  if(id) products=products.map(x=>x.id===id?p:x); else products.unshift(p);
+  save();render();closeModal();
+ };
+ if(file){const r=new FileReader();r.onload=()=>finish(r.result);r.readAsDataURL(file)}
+ else if(old) finish(old.image);
+ else alert('Please select an image.');
+});
+function editProduct(id){openModal(id)}
+function deleteProduct(id){if(confirm('Delete this furniture?')){products=products.filter(p=>p.id!==id);save();render()}}
+render();
+</script>
+</body>
+</html>
